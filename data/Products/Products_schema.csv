@@ -1,0 +1,9 @@
+column_name,data_type
+productName,CHAR
+price,FLOAT
+quantity,INT
+a,INT
+a,INT
+a,INT
+a,INT
+
