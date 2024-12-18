@@ -38,25 +38,30 @@
             border-bottom: 2px solid #eee;
         }
 
-        /* SQL输入区域 */
+        /* 输入区域样式 */
         .input-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             margin-bottom: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
+            border: 1px solid #e1e8ed;
         }
 
+        /* SQL输入框样式 */
         .sql-input {
             width: 100%;
-            height: 120px;
+            height: 200px;
             padding: 15px;
-            border: 2px solid #e1e8ed;
-            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #e1e8ed;
+            border-radius: 6px;
             font-family: 'Consolas', monospace;
-            font-size: 14px;
+            font-size: 15px;
+            line-height: 1.5;
             resize: vertical;
-            transition: border-color 0.3s;
             background: #f8f9fa;
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
 
         .sql-input:focus {
@@ -65,52 +70,62 @@
             box-shadow: 0 0 0 3px rgba(52,152,219,0.1);
         }
 
-        /* 按钮样式 */
+        /* 按钮组样式 */
         .button-group {
             display: flex;
             gap: 10px;
             align-items: center;
         }
 
+        /* 执行按钮样式 */
         .execute-btn {
-            background: #3498db;
+            padding: 10px 24px;
+            font-size: 15px;
+            font-weight: 500;
             color: white;
+            background: linear-gradient(135deg, #3498db, #2980b9);
             border: none;
-            padding: 10px 20px;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: background 0.3s;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(52,152,219,0.2);
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .execute-btn:hover {
-            background: #2980b9;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(52,152,219,0.3);
+            background: linear-gradient(135deg, #2980b9, #2573a7);
         }
 
-        .download-btn {
-            background: #27ae60;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: background 0.3s;
-            display: none;
+        .execute-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(52,152,219,0.2);
         }
 
-        .download-btn:hover {
-            background: #219a52;
-        }
-
-        /* 加载动画 */
+        /* 加载动画样式 */
         .loading {
             display: none;
             color: #666;
-            margin-left: 10px;
             font-size: 14px;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .loading::after {
+            content: '';
+            width: 16px;
+            height: 16px;
+            border: 2px solid #ddd;
+            border-top-color: #3498db;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
 
         /* 结果区域 */
@@ -197,6 +212,17 @@
             border-radius: 6px;
             margin-top: 10px;
             border: 1px solid #fad7d7;
+            overflow-x: auto;
+            max-width: 100%;
+        }
+
+        .error pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-break: break-word;
+            font-family: 'Consolas', monospace;
+            font-size: 13px;
+            line-height: 1.5;
         }
 
         .success {
@@ -207,6 +233,121 @@
             margin-top: 10px;
             border: 1px solid #c6f6d5;
         }
+
+        /* 消息样式 */
+        .multi-results {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .sql-result {
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #e1e8ed;
+        }
+        
+        .sql-statement {
+            padding: 10px 15px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e1e8ed;
+            font-family: 'Consolas', monospace;
+            font-size: 13px;
+        }
+        
+        .sql-statement .statement-content {
+            max-height: 300px;
+            overflow: auto;
+            background: #fff;
+            border: 1px solid #e1e8ed;
+            border-radius: 4px;
+            padding: 10px;
+        }
+        
+        .formatted-sql {
+            color: #2c3e50;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-width: 100%;
+        }
+        
+        .formatted-sql .keyword {
+            color: #0066cc;
+            font-weight: bold;
+        }
+        
+        .formatted-sql .type {
+            color: #2ecc71;
+        }
+        
+        .formatted-sql .identifier {
+            color: #e67e22;
+        }
+        
+        .formatted-sql .operator {
+            color: #95a5a6;
+            padding: 0 3px;
+        }
+        
+        .result-content {
+            padding: 15px;
+            background: white;
+        }
+        
+        .result-content pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        /* 下载按钮样式 */
+        .download-btn {
+            padding: 6px 12px;
+            font-size: 13px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 10px;
+            display: inline-block;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        
+        .download-btn:hover {
+            background-color: #2980b9;
+            transform: translateY(-1px);
+        }
+
+        .download-button-container {
+            margin-bottom: 10px;
+            text-align: right;
+        }
+
+        .download-btn {
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+
+        .download-btn:hover {
+            background-color: #45a049;
+        }
+
+        .query-result {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #e1e8ed;
+            border-radius: 6px;
+            background: white;
+        }
     </style>
 </head>
 <body>
@@ -214,186 +355,369 @@
         <h1>SQL命令执行器</h1>
         
         <div class="input-section">
-            <textarea class="sql-input" placeholder="在此输入SQL命令..."></textarea>
+            <textarea class="sql-input" placeholder="在此输入SQL命令...&#13;&#10;支持执行多条SQL语句，使用分号(;)分隔&#13;&#10;按Ctrl+Enter快速执行"></textarea>
             <div class="button-group">
-                <button class="execute-btn" onclick="executeSql()">执行</button>
-                <button class="download-btn" onclick="downloadCSV()">下载CSV</button>
+                <button class="execute-btn" onclick="executeSql()">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 2L13 8L3 14V2Z" fill="currentColor"/>
+                    </svg>
+                    执行
+                </button>
                 <span class="loading">执行中...</span>
             </div>
         </div>
-
-        <div class="result-section">
-            <div id="message" style="display: none;"></div>
-            <div class="result"></div>
-        </div>
+        <div id="message"></div>
+        <div class="result"></div>
 
         <div class="examples">
             <h3>SQL命令示例：</h3>
             <pre>
-# 创建表
-CREATE TABLE Products (productName CHAR,price FLOAT,quantity INT)
-CREATE TABLE Students (studentName CHAR,age INT,score FLOAT)
+# 1. 完整数据库操作示例（可直接复制执行）
+# 1.1 创建所有表
+CREATE TABLE Products (productName CHAR,price FLOAT,quantity INT);
+CREATE TABLE Students (studentName CHAR,age INT,score FLOAT);
+CREATE TABLE Orders (orderID INT,customerName CHAR,totalAmount FLOAT);
 
-# 插入数据
-INSERT INTO Products VALUES ('苹果', 5.5, 10)
-INSERT INTO Products VALUES ('香蕉', 3.99, 20)
-INSERT INTO Products VALUES ('橙子', 4.5, 15)
+# 1.2 插入商品数据
+INSERT INTO Products VALUES ('苹果', 5.5, 10);
+INSERT INTO Products VALUES ('香蕉', 3.99, 20);
+INSERT INTO Products VALUES ('橙子', 4.5, 15);
+INSERT INTO Products VALUES ('葡萄', 8.5, 25);
+INSERT INTO Products VALUES ('西瓜', 12.99, 8);
 
-INSERT INTO Students VALUES ('张三', 18, 92.5)
-INSERT INTO Students VALUES ('李四', 19, 88.5)
-INSERT INTO Students VALUES ('王五', 18, 95.5)
+# 1.3 插入学生数据
+INSERT INTO Students VALUES ('张三', 18, 92.5);
+INSERT INTO Students VALUES ('李四', 19, 88.5);
+INSERT INTO Students VALUES ('王五', 18, 95.5);
+INSERT INTO Students VALUES ('赵六', 20, 87.5);
+INSERT INTO Students VALUES ('钱七', 19, 91.0);
 
-# 查询数据
-SELECT * FROM Products
-SELECT productName,price FROM Products
-SELECT * FROM Products WHERE productName = '苹果'
-SELECT * FROM Products WHERE productName = '苹果' AND price = 5.5
-SELECT * FROM Products WHERE quantity = 10 AND price = 5.5
-SELECT * FROM Students WHERE age = 18 AND score = 95.5
+# 1.4 插入订单数据
+INSERT INTO Orders VALUES (1001, '张三', 55.5);
+INSERT INTO Orders VALUES (1002, '李四', 79.8);
+INSERT INTO Orders VALUES (1003, '王五', 128.5);
 
-# 更新数据
-UPDATE Products SET price = 6.5 WHERE productName = '苹果'
-UPDATE Students SET score = 95.5 WHERE studentName = '张三'
+# 2. 常用查询示例
+# 2.1 基础查询（可同时执行多个查询）
+SELECT * FROM Products;
+SELECT productName,price FROM Products;
+SELECT studentName,score FROM Students;
+SELECT orderID,totalAmount FROM Orders;
 
-# 删除数据
-DELETE FROM Products WHERE productName = '香蕉'
+# 2.2 条件查询组合
+# 示例1：多表查询
+SELECT * FROM Products WHERE price < 5.0;
+SELECT * FROM Students WHERE age = 18;
+SELECT * FROM Orders WHERE totalAmount > 100.0;
 
-# 注意：
+# 示例2：复合条件查询
+SELECT * FROM Products WHERE productName = '苹果' AND price = 5.5;
+SELECT * FROM Students WHERE age = 18 AND score > 90.0;
+SELECT * FROM Orders WHERE totalAmount > 50.0 AND customerName = '张三';
+
+# 3. 数据更新示例
+# 3.1 批量更新操作
+UPDATE Products SET price = 6.5 WHERE productName = '苹果';
+UPDATE Products SET quantity = quantity + 10 WHERE price < 5.0;
+UPDATE Students SET score = score + 1 WHERE age = 18;
+
+# 3.2 多表关联更新
+UPDATE Orders SET totalAmount = 150.0 WHERE orderID = 1001;
+UPDATE Students SET score = 95.5 WHERE studentName = '张三';
+UPDATE Products SET price = price * 1.1 WHERE quantity < 20;
+
+# 4. 删除操作示例
+# 4.1 批量删除
+DELETE FROM Products WHERE price > 10.0;
+DELETE FROM Students WHERE score < 60.0;
+DELETE FROM Orders WHERE totalAmount < 50.0;
+
+# 4.2 条件组合删除
+DELETE FROM Products WHERE price > 10.0 AND quantity < 10;
+DELETE FROM Students WHERE age > 19 AND score < 90.0;
+DELETE FROM Orders WHERE orderID > 1000 AND totalAmount < 100.0;
+
+# 5. 注意事项：
 # - CHAR类型的值必须用引号：'值'
 # - INT类型的值必须是整数且不带引号：18
 # - FLOAT类型的值必须带小数点且不带引号：92.5
-# - WHERE条件支持AND连接两个条件</pre>
+# - WHERE条件支持AND连接两个条件
+# - 数值比较支持：=, >, <
+# - 所有SQL命令不区分大小写
+# - 列名在查询时保持原始大小写
+# - 多条SQL语句用分号(;)分隔
+# - 可以同时执行多条语句
+# - 每条语句的执行结果会单独显示</pre>
         </div>
     </div>
 
     <!-- JavaScript代码保持不变 -->
     <script>
-        // 添加下载CSV的函数
-        function downloadCSV() {
-            const result = window.queryResult;  // 从全局变量获取查询结果
-            if (!result || !Array.isArray(result) || result.length === 0) return;
-
-            // 获取列名
-            const headers = result[0].map(([col, _]) => col);
+        let queryResults = [];
+        
+        function renderTable(data) {
+            if (!data || !data.length) return '<div>无数据</div>';
             
-            // 获取数据行
-            const rows = result.map(row => row.map(([_, value]) => value));
+            let html = '<table>';
             
-            // 构建CSV内容
-            let csvContent = '\ufeff';  // 添加BOM头
-            csvContent += headers.join(',') + '\n';  // 添加表头
-            csvContent += rows.map(row => 
-                row.map(value => {
-                    // 如果值包含逗号、引号或换行符，需要用引号包裹
-                    if (value.toString().includes(',') || value.toString().includes('"') || value.toString().includes('\n')) {
-                        return `"${value.toString().replace(/"/g, '""')}"`;
-                    }
-                    return value;
-                }).join(',')
-            ).join('\n');
-
-            // 创建Blob对象
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            // 添加表头
+            html += '<tr>';
+            data[0].forEach(([col, _]) => {
+                html += `<th>${col}</th>`;
+            });
+            html += '</tr>';
             
-            // 创建下载链接
-            const link = document.createElement('a');
-            const url = URL.createObjectURL(blob);
-            link.setAttribute('href', url);
-            link.setAttribute('download', 'query_result.csv');
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
+            // 添加数据行
+            data.forEach(row => {
+                html += '<tr>';
+                row.forEach(([_, value]) => {
+                    const isNumber = !isNaN(value) && value !== '';
+                    html += `<td class="${isNumber ? 'number' : ''}">${value}</td>`;
+                });
+                html += '</tr>';
+            });
             
-            // 触发下载
-            link.click();
-            
-            // 清理
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
+            html += '</table>';
+            return html;
         }
-
-        // 修改executeSql函数，在显示查询结果时保存数据并显示下载按钮
-        async function executeSql() {
+        
+        function executeSql() {
             const sql = document.querySelector('.sql-input').value;
             const resultDiv = document.querySelector('.result');
             const loadingSpan = document.querySelector('.loading');
             const messageDiv = document.getElementById('message');
             
             if (!sql.trim()) {
-                resultDiv.innerHTML = '<pre class="error">请输入SQL语句</pre>';
+                messageDiv.innerHTML = '<pre class="error">请输入SQL语句</pre>';
+                messageDiv.style.display = 'block';
                 return;
             }
-
-            try {
-                // 显示加载状态
-                loadingSpan.style.display = 'inline';
-                resultDiv.innerHTML = '';
-                messageDiv.style.display = 'none';
-
-                const response = await fetch('/execute', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ sql })
+            
+            // 显示加载状态
+            loadingSpan.style.display = 'inline';
+            resultDiv.innerHTML = '';
+            messageDiv.style.display = 'none';
+            
+            fetch('/execute', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ sql: sql })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // 创建结果容器
+                let html = '<div class="multi-results">';
+                
+                // 处理多条语句的结果
+                if (Array.isArray(data.result)) {
+                    data.result.forEach((result, index) => {
+                        html += `
+                            <div class="sql-result ${result.success ? 'success' : 'error'}">
+                                <div class="sql-statement">
+                                    <div class="statement-header">
+                                        <span>语句 ${index + 1}:</span>
+                                    </div>
+                                    <div class="statement-content">
+                                        ${formatSqlStatement(result.statement)}
+                                    </div>
+                                </div>
+                                <div class="result-content">
+                                    ${renderResult(result.result)}
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+                
+                html += '</div>';
+                resultDiv.innerHTML = html;
+            })
+            .catch(error => {
+                messageDiv.innerHTML = `<pre class="error">执行错误: ${error.message}</pre>`;
+                messageDiv.style.display = 'block';
+            })
+            .finally(() => {
+                loadingSpan.style.display = 'none';
+            });
+        }
+        
+        function formatSqlStatement(sql) {
+            // 移除多余的空格
+            sql = sql.trim().replace(/\s+/g, ' ');
+            
+            // 在每个语句之前添加换行
+            sql = sql.replace(/CREATE TABLE/gi, '\nCREATE TABLE');
+            
+            // 在关键位置添加换行和缩进
+            sql = sql.replace(/,\s*/g, ',\n    ');  // 在逗号后添加换行和缩进
+            sql = sql.replace(/\(\s*/g, ' (\n    '); // 在左括号后添加换行和缩进
+            sql = sql.replace(/\s*\)/g, '\n)');     // 在右括号前添加换行
+            
+            // 移除开头的换行
+            sql = sql.replace(/^\n/, '');
+            
+            // 高亮关键字
+            const keywords = ['CREATE', 'TABLE', 'INSERT', 'INTO', 'VALUES', 'SELECT', 'FROM', 'WHERE', 'UPDATE', 'SET', 'DELETE'];
+            const types = ['CHAR', 'INT', 'FLOAT'];
+            
+            // 添加语法高亮
+            sql = sql.split('\n').map(line => {
+                let formattedLine = line;
+                
+                // 高亮关键字
+                keywords.forEach(keyword => {
+                    const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
+                    formattedLine = formattedLine.replace(regex, `<span class="keyword">${keyword}</span>`);
                 });
                 
-                const data = await response.json();
+                // 高亮类型
+                types.forEach(type => {
+                    const regex = new RegExp(`\\b${type}\\b`, 'gi');
+                    formattedLine = formattedLine.replace(regex, `<span class="type">${type}</span>`);
+                });
                 
-                if (data.success) {
-                    if (typeof data.result === 'string') {
-                        const isError = data.result.includes('错误') || data.result.startsWith('错误:');
-                        resultDiv.innerHTML = `<pre class="${isError ? 'error' : 'success'}">${data.result}</pre>`;
-                        document.querySelector('.download-btn').style.display = 'none';  // 隐藏下载按钮
-                    } else {
-                        if (Array.isArray(data.result) && data.result.length > 0) {
-                            // 保存查询结果到全局变量
-                            window.queryResult = data.result;
-                            
-                            // 显示表格
-                            let html = '<table>';
-                            
-                            // 表头 - 不要转换大小写
-                            html += '<tr>';
-                            data.result[0].forEach(([col, _]) => {
-                                html += `<th style="text-transform: none;">${col}</th>`;  // 移除text-transform
-                            });
-                            html += '</tr>';
-                            
-                            // 数据行
-                            data.result.forEach(row => {
-                                html += '<tr>';
-                                row.forEach(([_, value]) => {
-                                    const isNumber = !isNaN(value) && value !== '';
-                                    html += `<td class="${isNumber ? 'number' : ''}">${value}</td>`;
-                                });
-                                html += '</tr>';
-                            });
-                            
-                            html += '</table>';
-                            resultDiv.innerHTML = html;
-                            
-                            // 显示下载按钮
-                            document.querySelector('.download-btn').style.display = 'inline-block';
-                        } else {
-                            resultDiv.innerHTML = '<pre>查询结果为空</pre>';
-                            document.querySelector('.download-btn').style.display = 'none';  // 隐藏下载按钮
-                        }
-                    }
-                } else {
-                    resultDiv.innerHTML = `<pre class="error">${data.result}</pre>`;
-                    document.querySelector('.download-btn').style.display = 'none';  // 隐藏下载按钮
-                }
-            } catch (error) {
-                resultDiv.innerHTML = `<pre class="error">执行出错: ${error}</pre>`;
-            } finally {
-                loadingSpan.style.display = 'none';
-            }
+                return formattedLine;
+            }).join('\n');
+            
+            return `<div class="formatted-sql">${sql}</div>`;
         }
-
-        // 支持Ctrl+Enter执行SQL
+        
+        function renderResult(result) {
+            if (!result) return '<div>无数据</div>';
+            
+            // 如果结果是字符串（可能是错误消息或成功消息）
+            if (typeof result === 'string') {
+                if (result.toLowerCase().includes('table already exists')) {
+                    return `<div class="error">表已存在</div>`;
+                } else if (result.toLowerCase().includes('created')) {
+                    return `<div class="success">表创建成功</div>`;
+                }
+                return `<pre>${result}</pre>`;
+            }
+            
+            // 如果结果是数组（查询结果）
+            if (Array.isArray(result)) {
+                let html = '<div class="query-result">';
+                
+                if (result.length > 0) {
+                    // 添加下载按钮
+                    html += '<div class="download-button-container">';
+                    html += '<button class="download-btn" onclick="downloadCSV(this)">下载查询结果</button>';
+                    html += '</div>';
+                    
+                    // 添加表格
+                    html += '<table>';
+                    // 获取列名
+                    const columns = result[0].map(([col, _]) => col);
+                    html += '<tr>';
+                    columns.forEach(col => {
+                        html += `<th>${col}</th>`;
+                    });
+                    html += '</tr>';
+                    
+                    // 添加数据行
+                    result.forEach(row => {
+                        html += '<tr>';
+                        row.forEach(([_, value]) => {
+                            const isNumber = !isNaN(value) && value !== '';
+                            html += `<td class="${isNumber ? 'number' : ''}">${value}</td>`;
+                        });
+                        html += '</tr>';
+                    });
+                    html += '</table>';
+                } else {
+                    html += '<div>无数据</div>';
+                }
+                
+                html += '</div>';
+                return html;
+            }
+            
+            // 其他类型的结果
+            return `<pre>${JSON.stringify(result, null, 2)}</pre>`;
+        }
+        
+        function downloadCSV(button) {
+            // 获取最近的查询结果容器
+            const resultContainer = button.closest('.query-result');
+            const table = resultContainer.querySelector('table');
+            if (!table) return;
+            
+            // 获取列名
+            const headers = [];
+            const headerCells = table.querySelectorAll('th');
+            headerCells.forEach(cell => headers.push(cell.textContent));
+            
+            // 获取数据行
+            const rows = [];
+            const dataCells = table.querySelectorAll('tr:not(:first-child)');
+            dataCells.forEach(row => {
+                const rowData = [];
+                row.querySelectorAll('td').forEach(cell => {
+                    // 如果值包含逗号、引号或换行符，将其用引号包裹
+                    let value = cell.textContent;
+                    if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+                        value = `"${value.replace(/"/g, '""')}"`;
+                    }
+                    rowData.push(value);
+                });
+                rows.push(rowData);
+            });
+            
+            // 创建CSV内容
+            const csvRows = [
+                headers.join(','),
+                ...rows.map(row => row.join(','))
+            ];
+            
+            // 添加 BOM 头以支持中文
+            const BOM = '\uFEFF';
+            const csvContent = BOM + csvRows.join('\n');
+            
+            // 创建Blob对象
+            const blob = new Blob([csvContent], { 
+                type: 'text/csv;charset=utf-8;'
+            });
+            
+            // 创建下载链接
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            
+            // 获取查询语句作为文件名的一部分
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            link.download = `查询结果_${timestamp}.csv`;
+            
+            // 触发下载
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        // 添加键盘快捷键支持
         document.querySelector('.sql-input').addEventListener('keydown', function(e) {
             if (e.ctrlKey && e.key === 'Enter') {
                 executeSql();
             }
         });
+        
+        function formatErrorMessage(error) {
+            if (typeof error === 'string') {
+                // 分割错误消息中的SQL语句部分
+                const parts = error.split('在语句:');
+                if (parts.length === 2) {
+                    const [errorMsg, sqlStmt] = parts;
+                    return `${errorMsg}\n在语句:\n${formatSqlStatement(sqlStmt.trim())}`;
+                }
+                return error;
+            } else if (Array.isArray(error)) {
+                // 如果是数组形式的结果，直接返回
+                return error.map(item => item.result).join('\n');
+            }
+            // 其他情况，转换为字符串
+            return String(error);
+        }
     </script>
 </body>
 </html>

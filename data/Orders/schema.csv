@@ -1,0 +1,4 @@
+column_name,data_type
+orderID,INT
+customerName,CHAR
+totalAmount,FLOAT
