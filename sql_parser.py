@@ -1,7 +1,7 @@
 from sly import Lexer, Parser
 import os
 import csv
-from typing import List, Tuple, Any, Dict, Optional
+from typing import List, Tuple, Any, Dict, Optional, Union
 from dataclasses import dataclass
 from enum import Enum, auto
 
@@ -55,6 +55,7 @@ class Condition:
     column: str
     operator: str
     value: Any
+    logic_op: str = 'AND'  # 默认为AND
 
 @dataclass
 class SQLStatement:
@@ -72,16 +73,23 @@ class InsertStatement(SQLStatement):
 
 @dataclass
 class SelectStatement(SQLStatement):
-    table_name: str
-    columns: List[str]
+    tables: List[str]  # 改为支持多个表
+    columns: List[Tuple[str, str]]  # (table_name, column_name)
     conditions: Optional[List[Condition]] = None
+
+@dataclass
+class UpdateValue:
+    """更新值的数据结构"""
+    column: Optional[str] = None  # 用于column + value形式
+    operator: Optional[str] = None  # 运算符：+, -, *, /
+    value: Any = None  # 具体的值
 
 @dataclass
 class UpdateStatement(SQLStatement):
     table_name: str
     column: str
     value: Any
-    conditions: List[Condition]
+    conditions: Optional[List[Condition]] = None
 
 @dataclass
 class DeleteStatement(SQLStatement):
@@ -106,6 +114,7 @@ class SQLLexer(Lexer):
         'SET',
         'DELETE',
         'AND',
+        'OR',
         'CHAR',
         'FLOAT_TYPE',
         'INT_TYPE',
@@ -120,10 +129,14 @@ class SQLLexer(Lexer):
         'COMMA',
         'LPAREN',
         'RPAREN',
-        'MINUS'
+        'MINUS',
+        'TIMES',     # 乘号
+        'DIVIDE',    # 除号
+        'DOT',       # 添加 DOT token
+        'PLUS',      # 添加 PLUS token
     }
     
-    # 字符串规则（支持单引号和双引号）
+    # 字符规则（支持单引号和双引号）
     STRING = r'(\'[^\']*\'|\"[^\"]*\")'
     
     # 比较运算符（注意顺序：先匹配较长的模式）
@@ -139,11 +152,15 @@ class SQLLexer(Lexer):
     COMMA = r','
     LPAREN = r'\('
     RPAREN = r'\)'
-    STAR = r'\*'
+    DOT = r'\.'
+    
+    # 算术运算符
+    PLUS = r'\+'
+    DIVIDE = r'/'
     
     # 数字（支持负数）
-    FLOAT = r'-?\d*\.\d+'
-    INT = r'-?\d+'
+    FLOAT = r'\d*\.\d+'
+    INT = r'\d+'
     
     # 标识符
     IDENTIFIER = r'[a-zA-Z_][a-zA-Z0-9_]*'
@@ -168,17 +185,36 @@ class SQLLexer(Lexer):
         'set': 'SET',
         'delete': 'DELETE',
         'and': 'AND',
+        'or': 'OR',
         'char': 'CHAR',
         'int': 'INT_TYPE',
-        'float': 'FLOAT_TYPE'
+        'float': 'FLOAT_TYPE',
     }
     
-    def IDENTIFIER(self, t):
-        t.type = self.keywords.get(t.value.lower(), 'IDENTIFIER')
+    # 修改 STAR 和 TIMES 的定义
+    @_(r'\*')
+    def STAR(self, t):
+        # 如果前面是 SELECT，则是 STAR
+        # 否则是 TIMES（乘法运算符）
+        if hasattr(self, 'last_token') and self.last_token == 'SELECT':
+            return t
+        t.type = 'TIMES'
         return t
     
-    def error(self, t):
-        raise SQLError(f"非法字符 '{t.value[0]}'")
+    # 记录上一个 token
+    def tokenize(self, text):
+        self.last_token = None
+        for tok in super().tokenize(text):
+            self.last_token = tok.type
+            yield tok
+
+    def IDENTIFIER(self, t):
+        # 将标识符转换为关键字（如果��关键字的话）
+        t.type = self.keywords.get(t.value.lower(), 'IDENTIFIER')
+        return t
+
+    # 添加减号规则
+    MINUS = r'-'
 
 class SQLParser(Parser):
     tokens = SQLLexer.tokens
@@ -202,7 +238,7 @@ class SQLParser(Parser):
                 if isinstance(value, str) and ('.' in value):
                     raise SQLTypeError(f"类型错误：期望INT类型，但值 {value} 包含小数点")
             except ValueError:
-                raise SQLTypeError(f"类型错误：期望INT类型，实际为 {value}")
+                raise SQLTypeError(f"类型错误：期望INT类型实际为 {value}")
         elif expected_type == DataType.FLOAT:
             try:
                 float_val = float(value)
@@ -210,7 +246,7 @@ class SQLParser(Parser):
                     # 检查是否只有一个小数点
                     if value.count('.') != 1:
                         if '.' not in value:
-                            raise SQLTypeError(f"类型错误：FLOAT类型必须包含小数点，如 {float_val}.0")
+                            raise SQLTypeError(f"类型错误：FLOAT类型必须包含小数点，如 {float_val}")
                         else:
                             raise SQLTypeError(f"类型错误：FLOAT类型只能包含一个小数点")
             except ValueError:
@@ -309,72 +345,165 @@ class SQLParser(Parser):
     def value_list(self, p):
         return [p.value] + p.value_list
 
-    @_('STRING', 'INT', 'FLOAT', 'MINUS INT', 'MINUS FLOAT')
+    @_('STRING', 'INT', 'FLOAT', 'MINUS INT', 'MINUS FLOAT', 'qualified_column')
     def value(self, p):
-        """解析值（字符串、整数或浮点数，包括负数）"""
+        """解析值（字符串、整数、浮点数、负数或列名）"""
         if len(p) == 2:  # 处理负数
             return f"-{p[1]}"
         if p[0] is None:
             return None
         return p[0]
 
-    @_('SELECT select_cols FROM IDENTIFIER')
+    @_('SELECT select_cols FROM table_list where_clause')
     def select_stmt(self, p):
-        return SelectStatement(p.IDENTIFIER, p.select_cols, None)
+        return SelectStatement(p.table_list, p.select_cols, p.where_clause)
 
-    @_('SELECT select_cols FROM IDENTIFIER where_clause')
+    @_('SELECT select_cols FROM table_list')
     def select_stmt(self, p):
-        return SelectStatement(p.IDENTIFIER, p.select_cols, p.where_clause)
+        return SelectStatement(p.table_list, p.select_cols, None)
+
+    @_('IDENTIFIER')
+    def table_list(self, p):
+        return [p.IDENTIFIER]
+
+    @_('IDENTIFIER COMMA table_list')
+    def table_list(self, p):
+        return [p.IDENTIFIER] + p.table_list
 
     @_('STAR')
     def select_cols(self, p):
-        return ['*']
+        return [('*', '*')]
 
     @_('column_list')
     def select_cols(self, p):
         return p.column_list
 
+    @_('qualified_column')
+    def column_list(self, p):
+        return [p.qualified_column]
+
+    @_('qualified_column COMMA column_list')
+    def column_list(self, p):
+        return [p.qualified_column] + p.column_list
+
+    @_('IDENTIFIER DOT IDENTIFIER')
+    def qualified_column(self, p):
+        """解析带表名限定的列名"""
+        return (p.IDENTIFIER0, p.IDENTIFIER1)
+
     @_('IDENTIFIER')
-    def column_list(self, p):
-        return [p.IDENTIFIER]
+    def qualified_column(self, p):
+        """解析不带表名限定的列名"""
+        return ('', p.IDENTIFIER)
 
-    @_('IDENTIFIER COMMA column_list')
-    def column_list(self, p):
-        return [p.IDENTIFIER] + p.column_list
-
-    @_('WHERE condition')
+    @_('WHERE conditions')
     def where_clause(self, p):
+        return p.conditions
+
+    @_('condition')
+    def conditions(self, p):
         return [p.condition]
 
-    @_('WHERE condition AND condition')
-    def where_clause(self, p):
-        return [p.condition0, p.condition1]
+    @_('condition AND conditions')
+    def conditions(self, p):
+        # 设置所有条件的逻辑运算符为AND
+        p.condition.logic_op = 'AND'
+        for cond in p.conditions:
+            cond.logic_op = 'AND'
+        return [p.condition] + p.conditions
 
-    @_('IDENTIFIER comparison_op value')
+    @_('condition OR conditions')
+    def conditions(self, p):
+        # 设置所有条件的逻辑运算符为OR
+        p.condition.logic_op = 'OR'
+        for cond in p.conditions:
+            cond.logic_op = 'OR'
+        return [p.condition] + p.conditions
+
+    @_('qualified_column comparison_op value')
     def condition(self, p):
-        """解析条件表达式"""
-        return Condition(p.IDENTIFIER, p.comparison_op, p.value)
+        """解析普通条件表达式"""
+        if isinstance(p.qualified_column, tuple):
+            table_name, col_name = p.qualified_column
+            column = f"{table_name}.{col_name}" if table_name else col_name
+        else:
+            column = p.qualified_column
+        return Condition(column, p.comparison_op, p.value)
+
+    @_('qualified_column EQUALS qualified_column')
+    def condition(self, p):
+        """解析表连接条件"""
+        # 处理左边的列名
+        if isinstance(p.qualified_column0, tuple):
+            table_name0, col_name0 = p.qualified_column0
+            column = f"{table_name0}.{col_name0}"
+        else:
+            column = p.qualified_column0
+        
+        # 处理右边的列名
+        if isinstance(p.qualified_column1, tuple):
+            table_name1, col_name1 = p.qualified_column1
+            value = f"{table_name1}.{col_name1}"
+        else:
+            value = p.qualified_column1
+        
+        return Condition(column, '=', value)
+
+    @_('qualified_column comparison_op qualified_column')
+    def condition(self, p):
+        """解析其他比较条件"""
+        # 处理左边的列名
+        if isinstance(p.qualified_column0, tuple):
+            table_name0, col_name0 = p.qualified_column0
+            column = f"{table_name0}.{col_name0}"
+        else:
+            column = p.qualified_column0
+        
+        # 处理右边的列名
+        if isinstance(p.qualified_column1, tuple):
+            table_name1, col_name1 = p.qualified_column1
+            value = f"{table_name1}.{col_name1}"
+        else:
+            value = p.qualified_column1
+        
+        return Condition(column, p.comparison_op, value)
 
     @_('EQUALS', 'LT', 'GT', 'LE', 'GE', 'NE')
     def comparison_op(self, p):
         """转换比较运算符token为实际的运算符"""
         return p[0]  # 直接返回token的值，不需要映射
 
-    @_('UPDATE IDENTIFIER SET IDENTIFIER EQUALS value where_clause')
+    @_('UPDATE IDENTIFIER SET update_list where_clause')
     def update_stmt(self, p):
-        return UpdateStatement(
-            table_name=p.IDENTIFIER0,
-            column=p.IDENTIFIER1,
-            value=p.value,
-            conditions=p.where_clause
-        )
-
-    @_('DELETE FROM IDENTIFIER where_clause')
-    def delete_stmt(self, p):
-        return DeleteStatement(
-            table_name=p.IDENTIFIER,
-            conditions=p.where_clause
-        )
+        return UpdateStatement(p.IDENTIFIER, p.update_list[0], p.update_list[1], p.where_clause)
+    
+    @_('UPDATE IDENTIFIER SET update_list')
+    def update_stmt(self, p):
+        return UpdateStatement(p.IDENTIFIER, p.update_list[0], p.update_list[1], None)
+    
+    @_('IDENTIFIER EQUALS value')
+    def update_list(self, p):
+        return (p.IDENTIFIER, p.value)
+    
+    @_('IDENTIFIER EQUALS IDENTIFIER arithmetic_op value')
+    def update_list(self, p):
+        return (p.IDENTIFIER0, UpdateValue(p.IDENTIFIER1, p.arithmetic_op, p.value))
+    
+    @_('PLUS')
+    def arithmetic_op(self, p):
+        return '+'
+    
+    @_('MINUS')
+    def arithmetic_op(self, p):
+        return '-'
+    
+    @_('TIMES')
+    def arithmetic_op(self, p):
+        return '*'
+    
+    @_('DIVIDE')
+    def arithmetic_op(self, p):
+        return '/'
 
     def error(self, token):
         if token:
@@ -382,75 +511,16 @@ class SQLParser(Parser):
         else:
             raise SQLSyntaxError("语法错误: 在输入结尾处")
 
-    def _parse_create_table(self):
-        """解析CREATE TABLE语句"""
-        columns = []
-        
-        # 跳过CREATE TABLE
-        self._expect('CREATE')
-        self._expect('TABLE')
-        
-        # 获取表名
-        table_name = self._expect('IDENTIFIER').value
-        
-        # 解析列定义
-        self._expect('(')
-        
-        while True:
-            # 获取列名
-            column_name = self._expect('IDENTIFIER').value
-            
-            # 获数据类型
-            token = self._advance()
-            if token.type == 'CHAR':
-                column_type = 'CHAR'
-            elif token.type == 'INT_TYPE':
-                column_type = 'INT'
-            elif token.type == 'FLOAT_TYPE':
-                column_type = 'FLOAT'
-            else:
-                raise SQLError(f"无效的数据类型: {token.type}")
-                
-            columns.append({'name': column_name, 'type': column_type})
-            
-            # 检查是否还有更多列
-            if self._match(')'):
-                break
-            self._expect(',')
-        
-        return CreateTableStatement(table_name, columns)
-
-    def _parse_insert(self):
-        """解析INSERT语句"""
-        # 跳过INSERT INTO
-        self._expect('INSERT')
-        self._expect('INTO')
-        
-        # 获取表名
-        table_name = self._expect('IDENTIFIER').value
-        
-        # 跳过VALUES
-        self._expect('VALUES')
-        
-        # 解析值列表
-        self._expect('(')
-        values = []
-        
-        while True:
-            if self._match('STRING'):
-                values.append(self.current_token.value[1:-1])  # 移除引号
-            elif self._match('FLOAT'):
-                values.append(float(self.current_token.value))
-            elif self._match('INT'):
-                values.append(int(self.current_token.value))
-            else:
-                raise SQLError(f"预期是值，实际是 {self.current_token.type}")
-                
-            self._advance()
-            
-            if self._match(')'):
-                break
-            self._expect(',')
-        
-        self._advance()  # 跳过右括号
-        return InsertStatement(table_name, values)
+    @_('DELETE FROM IDENTIFIER where_clause')
+    def delete_stmt(self, p):
+        return DeleteStatement(
+            table_name=p.IDENTIFIER,
+            conditions=p.where_clause
+        )
+    
+    @_('DELETE FROM IDENTIFIER')
+    def delete_stmt(self, p):
+        return DeleteStatement(
+            table_name=p.IDENTIFIER,
+            conditions=[]
+        )

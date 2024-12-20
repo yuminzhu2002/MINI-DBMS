@@ -1,4 +1,5 @@
 column_name,data_type
+productID,INT
 productName,CHAR
 price,FLOAT
 quantity,INT
