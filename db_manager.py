@@ -4,7 +4,7 @@ import shutil
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
 from threading import Lock
-from sql_parser import SQLError, SQLTypeError, DataType, Column, Table
+from sql_parser import SQLError, SQLTypeError, DataType,  Table
 
 class DBError(SQLError):
     """数据库操作错误"""
@@ -111,7 +111,7 @@ class DBManager:
     def rollback_transaction(self):
         """回滚事务"""
         if not self.current_transaction:
-            raise DBError("���有活动事务")
+            raise DBError("没有活动事务")
         self.current_transaction.rollback()
         self.current_transaction = None
         

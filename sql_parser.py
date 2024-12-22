@@ -1,7 +1,7 @@
 from sly import Lexer, Parser
 import os
 import csv
-from typing import List, Tuple, Any, Dict, Optional, Union
+from typing import List, Tuple, Any, Optional
 from dataclasses import dataclass
 from enum import Enum, auto
 
@@ -209,7 +209,7 @@ class SQLLexer(Lexer):
             yield tok
 
     def IDENTIFIER(self, t):
-        # 将标识符转换为关键字（如果��关键字的话）
+        # 将标识符转换为关键字
         t.type = self.keywords.get(t.value.lower(), 'IDENTIFIER')
         return t
 

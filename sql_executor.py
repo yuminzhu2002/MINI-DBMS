@@ -1,8 +1,8 @@
 import os
 import csv
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Any,  Tuple
 from sql_parser import (
-    SQLError, SQLTypeError, DataType, Column, Table,
+    SQLError, DataType, 
     CreateTableStatement, InsertStatement, SelectStatement,
     UpdateStatement, DeleteStatement, Condition, UpdateValue
 )
@@ -803,7 +803,7 @@ class SQLExecutor:
                         else:
                             formatted_value = str(float(result))
                     else:
-                        # 处理普��值
+                        # 处理普通值
                         formatted_value = str(stmt.value)
                     
                     # 只有当新值与旧值不同时才更新

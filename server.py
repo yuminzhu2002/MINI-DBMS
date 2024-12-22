@@ -1,8 +1,8 @@
 from flask import Flask, request, jsonify, render_template
-from sql_parser import SQLLexer, SQLParser, SQLError
+from sql_parser import SQLLexer, SQLParser
 from sql_executor import SQLExecutor
 import os
-import re
+
 
 app = Flask(__name__)
 
